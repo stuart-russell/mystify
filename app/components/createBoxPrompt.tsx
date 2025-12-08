@@ -4,17 +4,24 @@ import { useState } from "react";
 import { Card, Radio, Button, Typography, Tag, Space, Alert } from "antd";
 import type { RadioChangeEvent } from "antd";
 import { ArrowRight, Gift, Package, Shuffle } from "lucide-react";
+import { CarouselRef } from "antd/es/carousel";
 
 const { Title, Text, Paragraph } = Typography;
 
 type MysteryBoxType = "bundle" | "single" | undefined;
 
-export function CreateBoxPrompt() {
-  const [selectedType, setSelectedType] = useState<MysteryBoxType>(undefined);
+export function CreateBoxPrompt({ carouselChangePage }) {
+  // const [selectedType, setSelectedType] = useState<MysteryBoxType>(undefined);
 
-  const handleChange = (e: RadioChangeEvent) => {
-    setSelectedType(e.target.value);
-  };
+  // const handleChange = (e: RadioChangeEvent) => {
+  //   setSelectedType(e.target.value);
+  // };
+
+  // const handleContinue = () => {
+  //   console.log("Continuing with type:", selectedType);
+  //   console.log("Carousel Ref:", carouselChangePage);
+  //   carouselChangePage;
+  // };
 
   return (
     <Card
@@ -42,7 +49,7 @@ export function CreateBoxPrompt() {
         }
         type="success"
         style={{
-          background: "linear-gradient(to right, #077716, #07774e)",
+          background: "linear-gradient(to right, #007F5F, #014E41)",
           border: "none",
           borderRadius: "8px 8px 0 0",
           padding: "16px 24px",
@@ -51,8 +58,7 @@ export function CreateBoxPrompt() {
 
       <div style={{ padding: "24px" }}>
         <Paragraph type="secondary" style={{ marginBottom: "20px" }}>
-          Mystery boxes are a great way to increase excitement and clear
-          inventory. Choose how you'd like to set up your mystery box:
+          Choose how you'd like to set up your mystery box:
         </Paragraph>
 
         <Radio.Group
@@ -77,9 +83,9 @@ export function CreateBoxPrompt() {
                 height: "auto",
                 padding: 0,
                 border: "2px solid",
-                borderColor: selectedType === "bundle" ? "#52c41a" : "#d9d9d9",
+                borderColor: selectedType === "bundle" ? "#014E41" : "#d9d9d9",
                 borderRadius: "8px",
-                background: selectedType === "bundle" ? "#f6ffed" : "white",
+                background: selectedType === "bundle" ? "#F0FDF9" : "white",
                 overflow: "hidden",
               }}
             >
@@ -108,10 +114,9 @@ export function CreateBoxPrompt() {
                   Curate a bundle of mystery items. Customers receive multiple
                   surprise products in one box.
                 </Paragraph>
-                <Space size={[0, 8]} wrap>
+                {/*<Space size={[0, 8]} wrap>
                   <Tag color="default">3-5 items</Tag>
-                  <Tag color="default">Higher value</Tag>
-                </Space>
+                </Space>*/}
               </div>
             </Radio.Button>
 
@@ -122,9 +127,9 @@ export function CreateBoxPrompt() {
                 height: "auto",
                 padding: 0,
                 border: "2px solid",
-                borderColor: selectedType === "single" ? "#52c41a" : "#d9d9d9",
+                borderColor: selectedType === "single" ? "#014E41" : "#d9d9d9",
                 borderRadius: "8px",
-                background: selectedType === "single" ? "#f6ffed" : "white",
+                background: selectedType === "single" ? "#F0FDF9" : "white",
                 overflow: "hidden",
               }}
             >
@@ -153,10 +158,9 @@ export function CreateBoxPrompt() {
                   One randomly selected item from your inventory. Perfect for
                   affordable mystery options.
                 </Paragraph>
-                <Space size={[0, 8]} wrap>
+                {/*<Space size={[0, 8]} wrap>
                   <Tag color="default">1 item</Tag>
-                  <Tag color="default">Quick setup</Tag>
-                </Space>
+                </Space>*/}
               </div>
             </Radio.Button>
           </Space>
@@ -177,8 +181,11 @@ export function CreateBoxPrompt() {
             disabled={!selectedType}
             icon={<ArrowRight />}
             iconPlacement="end"
+            onClick={() => {
+              carouselChangePage;
+            }}
             style={{
-              background: selectedType ? "#077716" : undefined,
+              background: selectedType ? "#008060" : undefined,
               borderColor: selectedType ? "#07774e" : undefined,
             }}
           >

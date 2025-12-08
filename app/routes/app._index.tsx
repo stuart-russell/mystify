@@ -40,7 +40,7 @@ export default function Index() {
                 <s-table-cell></s-table-cell>
                 <s-table-cell>{row.boxName}</s-table-cell>
                 <s-table-cell>
-                  {row.type === "bundle" ? "Mystery Bundle" : "Mystery Item"}
+                  {row.type === "bundle" ? "Bundle" : "Single Item"}
                 </s-table-cell>
                 <s-table-cell>
                   <s-badge
