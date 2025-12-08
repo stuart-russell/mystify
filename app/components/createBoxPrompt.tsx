@@ -10,19 +10,15 @@ const { Title, Text, Paragraph } = Typography;
 
 type MysteryBoxType = "bundle" | "single" | undefined;
 
-export function CreateBoxPrompt({ carouselChangePage }) {
-  // const [selectedType, setSelectedType] = useState<MysteryBoxType>(undefined);
-
-  // const handleChange = (e: RadioChangeEvent) => {
-  //   setSelectedType(e.target.value);
-  // };
-
-  // const handleContinue = () => {
-  //   console.log("Continuing with type:", selectedType);
-  //   console.log("Carousel Ref:", carouselChangePage);
-  //   carouselChangePage;
-  // };
-
+export function CreateBoxPrompt({
+  carouselChangePage,
+  handleChange,
+  selectedType,
+}: {
+  carouselChangePage: () => void;
+  handleChange: (e: RadioChangeEvent) => void;
+  selectedType: MysteryBoxType;
+}) {
   return (
     <Card
       variant="outlined"
@@ -182,7 +178,7 @@ export function CreateBoxPrompt({ carouselChangePage }) {
             icon={<ArrowRight />}
             iconPlacement="end"
             onClick={() => {
-              carouselChangePage;
+              carouselChangePage();
             }}
             style={{
               background: selectedType ? "#008060" : undefined,
