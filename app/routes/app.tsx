@@ -18,8 +18,9 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
-        <s-link href="/app">Manage Existing Boxes</s-link>
+        <s-link href="/app/">Manage Existing Boxes</s-link>
         <s-link href="/app/createBox">Create a New Box</s-link>
+        <s-link href="/app/newLanding">Test New Landing Page</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>

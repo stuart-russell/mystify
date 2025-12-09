@@ -1,14 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Card, Radio, Button, Typography, Tag, Space, Alert } from "antd";
-import type { RadioChangeEvent } from "antd";
-import { ArrowRight, Gift, Package, Shuffle } from "lucide-react";
-import { CarouselRef } from "antd/es/carousel";
+import { Card, Button, Typography, Alert } from "antd";
+import { ArrowRight } from "lucide-react";
 
 const { Title, Text, Paragraph } = Typography;
-
-type MysteryBoxType = "bundle" | "single" | undefined;
 
 export function CreateBoxBundle({
   returnToStart,

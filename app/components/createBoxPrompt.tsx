@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Card, Radio, Button, Typography, Tag, Space, Alert } from "antd";
+import { Card, Radio, Button, Typography, Space, Alert } from "antd";
 import type { RadioChangeEvent } from "antd";
 import { ArrowRight, Gift, Package, Shuffle } from "lucide-react";
-import { CarouselRef } from "antd/es/carousel";
 
 const { Title, Text, Paragraph } = Typography;
 

@@ -1,4 +1,4 @@
-import React, { createRef, RefObject, useState } from "react";
+import { createRef, useState } from "react";
 import { Carousel } from "antd";
 import { CreateBoxPrompt } from "./createBoxPrompt";
 import type { RadioChangeEvent } from "antd";
