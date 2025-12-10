@@ -22,12 +22,13 @@ export default function Index() {
         justifyContent="space-between"
       >
         <s-box>
-          <s-heading>Manage Existing Boxes</s-heading>
+          <s-heading>Select Box Type</s-heading>
         </s-box>
         <s-box>
-          <s-button href="/app/newCreateBox" variant="primary">
-            Create New Box
-          </s-button>
+          <s-button-group>
+            <s-button slot="primary-action">Save</s-button>
+            <s-button slot="secondary-actions">Cancel</s-button>
+          </s-button-group>
         </s-box>
       </s-stack>
       <ExistingBoxTable tableData={tableData} />
