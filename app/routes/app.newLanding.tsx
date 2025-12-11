@@ -25,7 +25,11 @@ export default function Index() {
           <s-heading>Manage Existing Boxes</s-heading>
         </s-box>
         <s-box>
-          <s-button href="/app/newCreateBox" variant="primary">
+          <s-app-window
+            id="create-box-window"
+            src="/app/newCreateBox"
+          ></s-app-window>
+          <s-button command="--show" commandFor="create-box-window">
             Create New Box
           </s-button>
         </s-box>
