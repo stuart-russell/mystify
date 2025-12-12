@@ -1,16 +1,7 @@
-import { useEffect, useState } from "react";
-import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
-// import { useAppBridge } from "@shopify/app-bridge-react";
-import { authenticate } from "../shopify.server";
-import { boundary } from "@shopify/shopify-app-react-router/server";
+import { ExistingBoxTable } from "app/components/existingBoxTable";
 import { API } from "app/lib/api/mysify/api";
 import { TBoxTable } from "app/lib/api/mysify/schema";
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-
-  return null;
-};
+import { useEffect, useState } from "react";
 
 export default function Index() {
   const [tableData, setTableData] = useState<TBoxTable[]>([]);
@@ -21,58 +12,32 @@ export default function Index() {
       setTableData(response);
     });
   });
-
   return (
-    <s-page heading="Mystery Box">
-      <s-section padding="none">
-        <s-table>
-          <s-table-header-row>
-            <s-table-header></s-table-header>
-            <s-table-header>Box Name</s-table-header>
-            <s-table-header>Type</s-table-header>
-            <s-table-header>Status</s-table-header>
-            <s-table-header>Inventory</s-table-header>
-            <s-table-header></s-table-header>
-          </s-table-header-row>
-          <s-table-body>
-            {tableData.map((row, idx) => (
-              <s-table-row key={idx}>
-                <s-table-cell></s-table-cell>
-                <s-table-cell>{row.boxName}</s-table-cell>
-                <s-table-cell>
-                  {row.type === "bundle" ? "Bundle" : "Single Item"}
-                </s-table-cell>
-                <s-table-cell>
-                  <s-badge
-                    tone={row.status === "active" ? "success" : "critical"}
-                  >
-                    {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-                  </s-badge>
-                </s-table-cell>
-                <s-table-cell>—</s-table-cell>
-                <s-table-cell>
-                  <s-stack gap="small-500" direction="inline">
-                    <s-button
-                      variant="secondary"
-                      icon="edit"
-                      accessibilityLabel="edit"
-                    />
-                    <s-button
-                      variant="secondary"
-                      icon="delete"
-                      accessibilityLabel="delete"
-                    />
-                  </s-stack>
-                </s-table-cell>
-              </s-table-row>
-            ))}
-          </s-table-body>
-        </s-table>
-      </s-section>
+    <s-page>
+      <s-box padding="base"></s-box>
+      <s-stack
+        direction="inline"
+        paddingBlockEnd="base"
+        gap="large"
+        justifyContent="space-between"
+      >
+        <s-box>
+          <s-heading>Manage Existing Boxes</s-heading>
+        </s-box>
+        <s-box>
+          <s-link href="/app/createBox">
+            <s-button>Create New Box</s-button>
+          </s-link>
+          <s-app-window
+            id="create-box-window"
+            src="/app/createBox"
+          ></s-app-window>
+          {/*<s-button command="--show" commandFor="create-box-window">
+            Create New Box
+          </s-button>*/}
+        </s-box>
+      </s-stack>
+      <ExistingBoxTable tableData={tableData} />
     </s-page>
   );
 }
-
-export const headers: HeadersFunction = (headersArgs) => {
-  return boundary.headers(headersArgs);
-};

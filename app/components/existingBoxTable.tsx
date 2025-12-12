@@ -1,5 +1,3 @@
-"use client";
-
 import { TBoxTable } from "app/lib/api/mysify/schema";
 
 export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
