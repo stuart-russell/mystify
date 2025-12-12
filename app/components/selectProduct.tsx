@@ -7,8 +7,8 @@ export function SelectProduct({
   setSelectedProduct,
   routeToProductCreation,
 }: {
-  selectedProduct: TProduct | undefined;
-  setSelectedProduct: Dispatch<SetStateAction<TProduct | undefined>>;
+  selectedProduct: TProduct;
+  setSelectedProduct: Dispatch<SetStateAction<TProduct>>;
   routeToProductCreation: Function;
 }) {
   return (
@@ -24,7 +24,16 @@ export function SelectProduct({
             Choose an existing product to use as a mystery box or create a new
             one.
             <s-grid-item padding="base none none none">
-              <s-stack direction="inline" gap="base">
+              <s-stack direction="block" gap="base">
+                <s-box padding="none large-100 none none">
+                  <s-image
+                    src={selectedProduct.image}
+                    alt="Mystery Box"
+                    sizes="200px"
+                  />
+                </s-box>
+              </s-stack>
+              <s-stack direction="inline" gap="base" padding="base none">
                 <s-button
                   onClick={(_) => {
                     selectProduct(setSelectedProduct);
@@ -42,14 +51,16 @@ export function SelectProduct({
               </s-stack>
             </s-grid-item>
           </s-grid-item>
-          <s-grid-item>
+          {/*<s-grid-item>
             {selectedProduct && (
               <>
-                <s-heading>{selectedProduct.title}</s-heading>
-                <s-image src={selectedProduct.image} alt="Mystery Box" />
+                <s-box padding="base" maxBlockSize="20px">
+                  <s-heading>{selectedProduct.title}</s-heading>
+                  <s-image src={selectedProduct.image} alt="Mystery Box" />
+                </s-box>
               </>
             )}
-          </s-grid-item>
+          </s-grid-item>*/}
         </s-grid>
       </s-section>
     </>

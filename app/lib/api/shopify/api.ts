@@ -65,7 +65,7 @@ export async function getCreatedProductData(productId: String) {
 }
 
 export async function selectProduct(
-  setSelectedProduct: Dispatch<SetStateAction<TProduct | undefined>>,
+  setSelectedProduct: Dispatch<SetStateAction<TProduct>>,
 ) {
   const products = await window.shopify.resourcePicker({
     type: "product",

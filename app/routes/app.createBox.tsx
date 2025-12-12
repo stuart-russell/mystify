@@ -10,7 +10,10 @@ import { TProduct } from "app/lib/api/shopify/schema";
 
 export default function Index() {
   const [selectedType, setSelectedType] = useState<TBoxType>();
-  const [selectedProduct, setSelectedProduct] = useState<TProduct>();
+  const [selectedProduct, setSelectedProduct] = useState<TProduct>({
+    title: "",
+    image: "",
+  });
 
   const appBridge = useAppBridge();
 
@@ -44,7 +47,7 @@ export default function Index() {
         justifyContent="space-between"
       >
         <s-box>
-          <s-heading>Select Box Type</s-heading>
+          <s-heading>Select Box Type</s-heading>
         </s-box>
         <s-box></s-box>
       </s-stack>
@@ -70,7 +73,7 @@ export default function Index() {
         </>
       )}
       <s-box padding="base"></s-box>
-      {selectedProduct ? (
+      {selectedProduct.image !== "" ? (
         <s-section>
           {selectedType == "bundle" ? CreateBundleBox() : CreateSingleItemBox()}
         </s-section>
