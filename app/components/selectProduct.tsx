@@ -1,15 +1,16 @@
 import { selectProduct } from "app/lib/api/shopify/api";
 import { TProduct } from "app/lib/api/shopify/schema";
 import { Dispatch, SetStateAction } from "react";
+import { ProductCard } from "./productDisplayCard";
 
 export function SelectProduct({
   selectedProduct,
   setSelectedProduct,
   routeToProductCreation,
 }: {
-  selectedProduct: TProduct | undefined;
+  selectedProduct: TProduct;
   setSelectedProduct: Dispatch<SetStateAction<TProduct | undefined>>;
-  routeToProductCreation: Function;
+  routeToProductCreation: (event: any) => void;
 }) {
   return (
     <>
@@ -43,12 +44,11 @@ export function SelectProduct({
             </s-grid-item>
           </s-grid-item>
           <s-grid-item>
-            {selectedProduct && (
-              <>
-                <s-heading>{selectedProduct.title}</s-heading>
-                <s-image src={selectedProduct.image} alt="Mystery Box" />
-              </>
-            )}
+            <ProductCard
+              title={selectedProduct.title}
+              description={selectedProduct.description}
+              image={selectedProduct.image}
+            />
           </s-grid-item>
         </s-grid>
       </s-section>

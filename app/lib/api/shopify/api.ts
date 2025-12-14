@@ -39,6 +39,7 @@ export async function getCreatedProductData(productId: String) {
       query productInfo($id: ID!) {
         product(id: $id) {
           title
+          description
           media(first: 1) {
             nodes {
               preview {
@@ -61,6 +62,7 @@ export async function getCreatedProductData(productId: String) {
   return {
     title: product?.title,
     image: product?.media?.nodes[0]?.preview?.image?.url,
+    description: product?.description,
   };
 }
 

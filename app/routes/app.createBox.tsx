@@ -10,7 +10,13 @@ import { TProduct } from "app/lib/api/shopify/schema";
 
 export default function Index() {
   const [selectedType, setSelectedType] = useState<TBoxType>();
-  const [selectedProduct, setSelectedProduct] = useState<TProduct>();
+  const [selectedProduct, setSelectedProduct] = useState<TProduct>({
+    title: "Mystery Box Product Title",
+    description:
+      "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
+    image:
+      "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
+  });
 
   const appBridge = useAppBridge();
 
