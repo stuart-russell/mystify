@@ -7,6 +7,8 @@ import { CreateBundleBox } from "app/components/createBundleBox";
 import { CreateSingleItemBox } from "app/components/createSingleItemBox";
 import { getCreatedProductData } from "app/lib/api/shopify/api";
 import { TProduct } from "app/lib/api/shopify/schema";
+import { useLoaderData } from "react-router";
+import { loader } from "./app";
 
 export default function Index() {
   const [selectedType, setSelectedType] = useState<TBoxType>();
@@ -24,7 +26,9 @@ export default function Index() {
     setSelectedType(type);
   };
 
-  const routeToProductCreation = async () => {
+  const { apiKey } = useLoaderData<typeof loader>();
+
+  const routeToProductCreation = async (apiKey: string) => {
     if (!appBridge.intents.invoke) return;
     const productCreateActivity = await appBridge.intents.invoke(
       "create:shopify/Product",
@@ -32,9 +36,7 @@ export default function Index() {
     const productCreateResponse = (await productCreateActivity.complete) as {
       data: { id: string };
     };
-    const response = productCreateResponse;
-    const productData = await getCreatedProductData(response.data.id);
-    setSelectedProduct(productData);
+    return await getCreatedProductData(productCreateResponse.data.id, apiKey);
   };
 
   return (
@@ -72,11 +74,12 @@ export default function Index() {
             selectedProduct={selectedProduct}
             routeToProductCreation={routeToProductCreation}
             setSelectedProduct={setSelectedProduct}
+            apiKey={apiKey}
           />
         </>
       )}
       <s-box padding="base"></s-box>
-      {selectedProduct ? (
+      {selectedProduct.title !== "Mystery Box Product Title" ? (
         <s-section>
           {selectedType == "bundle" ? CreateBundleBox() : CreateSingleItemBox()}
         </s-section>

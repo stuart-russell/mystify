@@ -6,10 +6,12 @@ import { ProductCard } from "./productDisplayCard";
 export function SelectProduct({
   selectedProduct,
   setSelectedProduct,
+  apiKey,
   routeToProductCreation,
 }: {
   selectedProduct: TProduct;
-  setSelectedProduct: Dispatch<SetStateAction<TProduct | undefined>>;
+  setSelectedProduct: Dispatch<SetStateAction<TProduct>>;
+  apiKey: string;
   routeToProductCreation: (event: any) => void;
 }) {
   return (
@@ -35,7 +37,10 @@ export function SelectProduct({
                   Select product
                 </s-button>
                 <s-button
-                  onClick={routeToProductCreation}
+                  onClick={(_) => {
+                    routeToProductCreation(apiKey);
+                  }}
+                  // onClick={routeToProductCreation}
                   accessibilityLabel="Create a new product to use as a mystery box"
                 >
                   Create Product

@@ -32,9 +32,6 @@ export default function Index() {
             id="create-box-window"
             src="/app/createBox"
           ></s-app-window>
-          {/*<s-button command="--show" commandFor="create-box-window">
-            Create New Box
-          </s-button>*/}
         </s-box>
       </s-stack>
       <ExistingBoxTable tableData={tableData} />

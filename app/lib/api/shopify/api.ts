@@ -29,9 +29,8 @@ class GraphQLClient {
   }
 }
 
-export async function getCreatedProductData(productId: String) {
+export async function getCreatedProductData(productId: String, apiKey: string) {
   const gql = GraphQLClient;
-  const { apiKey } = useLoaderData<typeof loader>();
   const client = new gql("/admin/api/2024-01/graphql.json", apiKey);
 
   const response = await client.query(
@@ -67,7 +66,7 @@ export async function getCreatedProductData(productId: String) {
 }
 
 export async function selectProduct(
-  setSelectedProduct: Dispatch<SetStateAction<TProduct | undefined>>,
+  setSelectedProduct: Dispatch<SetStateAction<TProduct>>,
 ) {
   const products = await window.shopify.resourcePicker({
     type: "product",
@@ -75,8 +74,10 @@ export async function selectProduct(
   });
 
   if (products) {
-    const { images, title } = products[0];
-    const image = images[0].originalSrc;
-    setSelectedProduct({ image, title });
+    const { images, title, descriptionHtml } = products[0];
+    const image = images[0]
+      ? images[0].originalSrc
+      : "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png";
+    setSelectedProduct({ image, title, description: descriptionHtml });
   }
 }
