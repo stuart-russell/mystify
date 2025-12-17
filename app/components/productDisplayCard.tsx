@@ -1,21 +1,17 @@
 export function ProductCard({
   title,
   description,
+  price,
   image,
 }: {
   title: string;
   description: string;
+  price: string;
   image: string;
 }) {
   return (
     <>
-      <s-box
-        padding="base"
-        // background="surface"
-        border="base"
-        borderRadius="base"
-        // maxInlineSize="300px"
-      >
+      <s-box padding="base" border="base" borderRadius="base">
         <s-stack gap="base">
           <s-image
             src={
@@ -37,10 +33,14 @@ export function ProductCard({
               <s-heading>{title || "Mystery Box Product Title"}</s-heading>
             </s-stack>
             <s-paragraph color="subdued">
-              {description ||
-                "This is a brief description of the product inside the mystery box. It gives an overview of what to expect."}
+              {description.length > 200
+                ? `${description.substring(0, 200)}...`
+                : description ||
+                  "This is a brief description of the product inside the mystery box. It gives an overview of what to expect."}
             </s-paragraph>
           </s-stack>
+          <s-divider />
+          <s-text type="strong">{price}</s-text>
         </s-stack>
       </s-box>
     </>

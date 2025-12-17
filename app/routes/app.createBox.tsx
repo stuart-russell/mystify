@@ -24,18 +24,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
 
-  const currencyCodeResponse = await admin.graphql(
-    `#graphql
-    {
-      shop {
-        currencyCode
-      }
-    }`,
-  );
-
-  const currencyCode = (await currencyCodeResponse.json()).data.shop
-    .currencyCode;
-
   const response = await admin.graphql(
     `#graphql
     query productInfo($id: ID!) {
@@ -70,15 +58,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ? responseJson.data.product.media.nodes[0].preview.image.url
     : "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png";
 
-  // const price = responseJson.data?.product?.variants.nodes[0]?.price
-  //   ? `${responseJson.data.product.variants.nodes[0].price} ${currencyCode}`
-  //   : `N/A ${currencyCode}`;
+  const price = responseJson.data?.product?.variants.nodes[0]?.price
+    ? `${responseJson.data.product.variants.nodes[0].price}`
+    : `N/A`;
 
   return {
     title: responseJson.data?.product?.title || "Mystery Box Product Title",
     image: image,
+    price: price,
     description:
-      responseJson.data?.product?.description ||
+      responseJson.data?.product?.description.replace(/<[^>]*>/g, "") ||
       "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
   };
 };
@@ -89,6 +78,7 @@ export default function Index() {
     title: "Mystery Box Product Title",
     description:
       "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
+    price: "N/A",
     image:
       "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
   });

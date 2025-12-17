@@ -46,7 +46,6 @@ export function SelectProduct({
                 <s-button
                   onClick={async () => {
                     const productId = await routeToProductCreation();
-                    // productFetcher.reset();
                     await productFetcher.submit(
                       { productId },
                       { method: "POST" },
@@ -63,6 +62,7 @@ export function SelectProduct({
             <ProductCard
               title={selectedProduct.title}
               description={selectedProduct.description}
+              price={selectedProduct.price}
               image={selectedProduct.image}
             />
           </s-grid-item>
