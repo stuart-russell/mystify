@@ -23,6 +23,9 @@ importers:
       '@react-router/serve':
         specifier: ^7.9.3
         version: 7.10.1(react-router@7.10.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@shopify/admin-api-client':
+        specifier: ^1.1.1
+        version: 1.1.1
       '@shopify/app-bridge-react':
         specifier: ^4.2.4
         version: 4.2.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -32,6 +35,9 @@ importers:
       '@shopify/shopify-app-session-storage-prisma':
         specifier: ^7.0.0
         version: 7.0.3(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))(@shopify/shopify-api@12.1.2)(@shopify/shopify-app-session-storage@4.0.3(@shopify/shopify-api@12.1.2))(prisma@6.19.0(typescript@5.9.3))
+      '@shopify/storefront-api-client':
+        specifier: ^1.0.9
+        version: 1.0.9
       isbot:
         specifier: ^5.1.31
         version: 5.1.32

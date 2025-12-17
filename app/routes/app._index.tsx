@@ -1,6 +1,6 @@
 import { ExistingBoxTable } from "app/components/existingBoxTable";
-import { API } from "app/lib/api/mysify/api";
-import { TBoxTable } from "app/lib/api/mysify/schema";
+import { API } from "app/lib/api/mystify/api";
+import { TBoxTable } from "app/lib/api/mystify/schema";
 import { useEffect, useState } from "react";
 
 export default function Index() {

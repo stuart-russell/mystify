@@ -1,19 +1,26 @@
 import { selectProduct } from "app/lib/api/shopify/api";
 import { TProduct } from "app/lib/api/shopify/schema";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { ProductCard } from "./productDisplayCard";
+import { FetcherWithComponents } from "react-router";
 
 export function SelectProduct({
   selectedProduct,
   setSelectedProduct,
-  apiKey,
   routeToProductCreation,
+  productFetcher,
 }: {
   selectedProduct: TProduct;
   setSelectedProduct: Dispatch<SetStateAction<TProduct>>;
-  apiKey: string;
-  routeToProductCreation: (event: any) => void;
+  routeToProductCreation: () => Promise<string>;
+  productFetcher: FetcherWithComponents<TProduct>;
 }) {
+  useEffect(() => {
+    if (productFetcher.data) {
+      setSelectedProduct(productFetcher.data);
+    }
+  }, [productFetcher.data]);
+
   return (
     <>
       <s-section>
@@ -37,10 +44,14 @@ export function SelectProduct({
                   Select product
                 </s-button>
                 <s-button
-                  onClick={(_) => {
-                    routeToProductCreation(apiKey);
+                  onClick={async () => {
+                    const productId = await routeToProductCreation();
+                    // productFetcher.reset();
+                    await productFetcher.submit(
+                      { productId },
+                      { method: "POST" },
+                    );
                   }}
-                  // onClick={routeToProductCreation}
                   accessibilityLabel="Create a new product to use as a mystery box"
                 >
                   Create Product

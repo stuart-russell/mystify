@@ -1,4 +1,4 @@
-import { TBoxType } from "app/lib/api/mysify/schema";
+import { TBoxType } from "app/lib/api/mystify/schema";
 import { Package, Shuffle } from "lucide-react";
 
 export function SelectBoxType({

@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { TProduct } from "./schema";
-import { useLoaderData } from "react-router";
-import { loader } from "app/routes/app";
+// import { ActionFunctionArgs } from "react-router";
+// import { authenticate } from "app/shopify.server";
 
 class GraphQLClient {
   private endpoint: string;
@@ -81,3 +81,44 @@ export async function selectProduct(
     setSelectedProduct({ image, title, description: descriptionHtml });
   }
 }
+
+// export const fetchProductDetailsAction = async (
+//   { request }: ActionFunctionArgs,
+//   productId: string,
+// ) => {
+//   const { admin } = await authenticate.admin(request);
+//   const response = await admin.graphql(
+//     `#graphql
+//     query productInfo($id: ID!) {
+//       product(id: $id) {
+//         title
+//         description
+//         media(first: 1) {
+//           nodes {
+//             preview {
+//               image {
+//                 url
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }`,
+//     {
+//       variables: {
+//         id: productId,
+//       },
+//     },
+//   );
+//   const responseJson = await response.json();
+
+//   return {
+//     title: responseJson.data?.product?.title || "Mystery Box Product Title",
+//     image:
+//       responseJson.data?.product?.media.nodes[0].preview?.image?.url ||
+//       "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
+//     description:
+//       responseJson.data?.product?.description ||
+//       "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
+//   };
+// };

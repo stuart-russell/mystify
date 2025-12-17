@@ -1,4 +1,4 @@
-import { TBoxTable } from "app/lib/api/mysify/schema";
+import { TBoxTable } from "app/lib/api/mystify/schema";
 
 export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
   return (
