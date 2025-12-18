@@ -64,6 +64,7 @@ export function SelectProduct({
               description={selectedProduct.description}
               price={selectedProduct.price}
               image={selectedProduct.image}
+              inventory={selectedProduct.inventory}
             />
           </s-grid-item>
         </s-grid>

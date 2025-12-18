@@ -3,11 +3,13 @@ export function ProductCard({
   description,
   price,
   image,
+  inventory,
 }: {
   title: string;
   description: string;
   price: string;
   image: string;
+  inventory: number;
 }) {
   return (
     <>
@@ -40,7 +42,15 @@ export function ProductCard({
             </s-paragraph>
           </s-stack>
           <s-divider />
-          <s-text type="strong">{price}</s-text>
+          <s-stack
+            direction="inline"
+            gap="small"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <s-text type="strong">{price}</s-text>
+            <s-text type="strong">In Stock - {inventory}</s-text>
+          </s-stack>
         </s-stack>
       </s-box>
     </>

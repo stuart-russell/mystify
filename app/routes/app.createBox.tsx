@@ -6,7 +6,7 @@ import { SelectBoxType } from "app/components/selectBoxType";
 import { CreateBundleBox } from "app/components/createBundleBox";
 import { CreateSingleItemBox } from "app/components/createSingleItemBox";
 ("app/lib/api/shopify/api");
-import { TProduct } from "app/lib/api/shopify/schema";
+import { TProduct, TVariantSelection } from "app/lib/api/shopify/schema";
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -30,6 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       product(id: $id) {
         title
         description
+        totalInventory
         variants(first: 1) {
           nodes {
             price
@@ -69,6 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     description:
       responseJson.data?.product?.description.replace(/<[^>]*>/g, "") ||
       "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
+    inventory: responseJson.data?.product?.totalInventory || 0,
   };
 };
 
@@ -81,6 +83,7 @@ export default function Index() {
     price: "N/A",
     image:
       "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
+    inventory: 0,
   });
 
   const appBridge = useAppBridge();
@@ -145,15 +148,19 @@ export default function Index() {
           />
         </>
       )}
-      <s-box padding="base"></s-box>
+      <s-box padding="small-300"></s-box>
       {selectedProduct.title !== "Mystery Box Product Title" ? (
-        <s-section>
-          {selectedType == "bundle" ? (
-            <CreateBundleBox />
-          ) : (
-            <CreateSingleItemBox />
-          )}
-        </s-section>
+        <>
+          <s-heading>Configure Box</s-heading>
+          <s-box padding="small-200"></s-box>
+          <s-section>
+            {selectedType == "bundle" ? (
+              <CreateBundleBox />
+            ) : (
+              <CreateSingleItemBox />
+            )}
+          </s-section>
+        </>
       ) : null}
     </s-page>
   );
