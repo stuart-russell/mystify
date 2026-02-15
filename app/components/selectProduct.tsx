@@ -9,11 +9,13 @@ export function SelectProduct({
   setSelectedProduct,
   routeToProductCreation,
   productFetcher,
+  setProductId,
 }: {
   selectedProduct: TProduct;
   setSelectedProduct: Dispatch<SetStateAction<TProduct>>;
   routeToProductCreation: () => Promise<string>;
   productFetcher: FetcherWithComponents<TProduct>;
+  setProductId?: (id: string) => void;
 }) {
   useEffect(() => {
     if (productFetcher.data) {
@@ -36,14 +38,16 @@ export function SelectProduct({
             <s-grid-item padding="base none none none">
               <s-stack direction="inline" gap="base">
                 <s-button
+                  type="button"
                   onClick={(_) => {
-                    selectProduct(setSelectedProduct);
+                    selectProduct(setSelectedProduct, setProductId);
                   }}
                   accessibilityLabel="Select the product to use as a mystery box"
                 >
                   Select product
                 </s-button>
                 <s-button
+                  type="button"
                   onClick={async () => {
                     const productId = await routeToProductCreation();
                     await productFetcher.submit(

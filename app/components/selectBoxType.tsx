@@ -19,6 +19,7 @@ export function SelectBoxType({
           borderColor={selectedType == "bundle" ? "strong" : "base"}
           borderWidth={selectedType == "bundle" ? "large" : "base"}
           onClick={() => handleTypeSelection("bundle")}
+          type="button"
         >
           <Package style={{ fontSize: "24px", color: "#faad14" }} />
           <s-heading>Bundle Box</s-heading>
@@ -37,6 +38,7 @@ export function SelectBoxType({
           borderColor={selectedType == "item" ? "strong" : "base"}
           borderWidth={selectedType == "item" ? "large" : "base"}
           onClick={() => handleTypeSelection("item")}
+          type="button"
         >
           <Shuffle style={{ fontSize: "24px", color: "#52c41a" }} />
           <s-heading>Single Item</s-heading>

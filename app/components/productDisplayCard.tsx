@@ -35,8 +35,8 @@ export function ProductCard({
               <s-heading>{title || "Mystery Box Product Title"}</s-heading>
             </s-stack>
             <s-paragraph color="subdued">
-              {description.length > 200
-                ? `${description.substring(0, 200)}...`
+              {description.length > 100
+                ? `${description.substring(0, 100)}...`
                 : description ||
                   "This is a brief description of the product inside the mystery box. It gives an overview of what to expect."}
             </s-paragraph>

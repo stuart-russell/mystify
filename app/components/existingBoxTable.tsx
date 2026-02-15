@@ -28,12 +28,12 @@ export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
             <s-table-cell>
               <s-stack gap="small-500" direction="inline">
                 <s-button
-                  variant="secondary"
+                  variant="tertiary"
                   icon="edit"
                   accessibilityLabel="edit"
                 />
                 <s-button
-                  variant="secondary"
+                  variant="tertiary"
                   icon="delete"
                   accessibilityLabel="delete"
                 />

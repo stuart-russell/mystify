@@ -3,13 +3,14 @@ import { TProduct, TVariantSelection } from "./schema";
 
 export async function selectProduct(
   setSelectedProduct: Dispatch<SetStateAction<TProduct>>,
+  setProductId?: (id: string) => void,
 ) {
   const products = await window.shopify.resourcePicker({
     type: "product",
     action: "select",
   });
   if (products) {
-    const { images, title, descriptionHtml, variants, totalInventory } =
+    const { images, title, descriptionHtml, variants, totalInventory, id } =
       products[0];
     const price = variants[0].price || "N/A";
     const image = images[0]
@@ -24,6 +25,9 @@ export async function selectProduct(
       description: descriptionHtml.replace(/<[^>]*>/g, ""),
       inventory: inventory || 0,
     });
+    if (setProductId && id) {
+      setProductId(id as string);
+    }
   }
 }
 

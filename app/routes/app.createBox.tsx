@@ -1,5 +1,5 @@
 import { TBoxType } from "app/lib/api/mystify/schema";
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { SelectProduct } from "app/components/selectProduct";
 import { SelectBoxType } from "app/components/selectBoxType";
@@ -74,8 +74,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   };
 };
 
+type BoxStatus = "draft" | "active" | "inactive";
+
 export default function Index() {
   const [selectedType, setSelectedType] = useState<TBoxType>();
+  const [boxStatus, setBoxStatus] = useState<BoxStatus>("draft");
   const [selectedProduct, setSelectedProduct] = useState<TProduct>({
     title: "Mystery Box Product Title",
     description:
@@ -85,8 +88,57 @@ export default function Index() {
       "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
     inventory: 0,
   });
+  const [productId, setProductId] = useState<string>("");
+  const [boxConfigValid, setBoxConfigValid] = useState<boolean>(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const boxTypeInputRef = useRef<HTMLInputElement>(null);
+  const productIdInputRef = useRef<HTMLInputElement>(null);
+  const boxStatusInputRef = useRef<HTMLInputElement>(null);
 
   const appBridge = useAppBridge();
+
+  // Trigger form change event when state changes
+  useEffect(() => {
+    if (boxTypeInputRef.current && selectedType !== undefined) {
+      boxTypeInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }, [selectedType]);
+
+  useEffect(() => {
+    if (productIdInputRef.current && productId) {
+      productIdInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (boxStatusInputRef.current) {
+      boxStatusInputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }, [boxStatus]);
+
+  // Check if form is valid for active status
+  const canBeActive = useMemo(() => {
+    const hasBoxType = selectedType !== undefined;
+    const hasProduct =
+      productId !== "" &&
+      selectedProduct.title !== "Mystery Box Product Title";
+    return hasBoxType && hasProduct && boxConfigValid;
+  }, [selectedType, productId, selectedProduct.title, boxConfigValid]);
+
+  // Auto-revert to draft if form becomes invalid while active
+  useEffect(() => {
+    if (boxStatus === "active" && !canBeActive) {
+      setBoxStatus("draft");
+    }
+  }, [boxStatus, canBeActive]);
+
+  // Prevent selecting active if form is invalid
+  const handleStatusChange = (value: string) => {
+    if (value === "active" && !canBeActive) {
+      return; // Don't allow changing to active if form is invalid
+    }
+    setBoxStatus(value as BoxStatus);
+  };
 
   const handleTypeSelection = (type: TBoxType) => {
     setSelectedType(type);
@@ -102,66 +154,103 @@ export default function Index() {
     const productCreateResponse = (await productCreateActivity.complete) as {
       data: { id: string };
     };
-    return productCreateResponse.data.id;
+    const id = productCreateResponse.data.id;
+    setProductId(id);
+    return id;
   };
 
   return (
     <s-page heading="Create a New Mystery Box">
-      <s-button
-        slot="primary-action"
-        variant="primary"
-        onClick={() => shopify.toast.show("Save")}
-      >
-        Save
-      </s-button>
-      <s-box padding="base"></s-box>
-      <s-stack
-        direction="inline"
-        paddingBlockEnd="base"
-        gap="large"
-        justifyContent="space-between"
-      >
-        <s-box>
-          <s-heading>Select Box Type</s-heading>
-        </s-box>
-        <s-box></s-box>
-      </s-stack>
-      <s-grid
-        gridTemplateColumns="repeat(2, 1fr)"
-        gap="small"
-        justifyContent="center"
-      >
-        <SelectBoxType
-          handleTypeSelection={handleTypeSelection}
-          selectedType={selectedType}
+      <form ref={formRef} data-save-bar>
+        {/* Hidden inputs for form data */}
+        <input
+          ref={boxTypeInputRef}
+          type="hidden"
+          name="boxType"
+          value={selectedType || ""}
         />
-      </s-grid>
-      <s-box padding="base"></s-box>
-
-      {selectedType && (
-        <>
-          <SelectProduct
-            selectedProduct={selectedProduct}
-            routeToProductCreation={routeToProductCreation}
-            setSelectedProduct={setSelectedProduct}
-            productFetcher={fetcher}
+        <input
+          ref={productIdInputRef}
+          type="hidden"
+          name="productId"
+          value={productId}
+        />
+        <input
+          ref={boxStatusInputRef}
+          type="hidden"
+          name="boxStatus"
+          value={boxStatus}
+        />
+        <s-box padding="base"></s-box>
+        <s-box padding="small-200"></s-box>
+        <s-stack
+          direction="inline"
+          paddingBlockEnd="base"
+          gap="large"
+          justifyContent="space-between"
+        >
+          <s-box>
+            <s-heading>Select Box Type</s-heading>
+          </s-box>
+          <s-box></s-box>
+        </s-stack>
+        <s-grid
+          gridTemplateColumns="repeat(2, 1fr)"
+          gap="small"
+          justifyContent="center"
+        >
+          <SelectBoxType
+            handleTypeSelection={handleTypeSelection}
+            selectedType={selectedType}
           />
-        </>
-      )}
-      <s-box padding="small-300"></s-box>
-      {selectedProduct.title !== "Mystery Box Product Title" ? (
-        <>
-          <s-heading>Configure Box</s-heading>
-          <s-box padding="small-200"></s-box>
-          <s-section>
-            {selectedType == "bundle" ? (
-              <CreateBundleBox />
-            ) : (
-              <CreateSingleItemBox />
-            )}
-          </s-section>
-        </>
-      ) : null}
+        </s-grid>
+        <s-box padding="base"></s-box>
+
+        {selectedType && (
+          <>
+            <SelectProduct
+              selectedProduct={selectedProduct}
+              routeToProductCreation={routeToProductCreation}
+              setSelectedProduct={setSelectedProduct}
+              productFetcher={fetcher}
+              setProductId={setProductId}
+            />
+          </>
+        )}
+        <s-box padding="small-300"></s-box>
+        {selectedProduct.title !== "Mystery Box Product Title" ? (
+          <>
+            <s-heading>Configure Box</s-heading>
+            <s-box padding="small-200"></s-box>
+            <s-section>
+              {selectedType == "bundle" ? (
+                <CreateBundleBox onValidationChange={setBoxConfigValid} />
+              ) : (
+                <CreateSingleItemBox onValidationChange={setBoxConfigValid} />
+              )}
+            </s-section>
+          </>
+        ) : null}
+        <s-box padding="small-300"></s-box>
+        <s-heading>Box Status</s-heading>
+        <s-box padding="small-200"></s-box>
+        <s-section>
+          <s-box paddingBlockEnd="base">
+          <s-select
+            name="boxStatus"
+            value={boxStatus}
+            onChange={(e) => handleStatusChange(e.currentTarget.value)}
+            disabled={boxStatus === "active" && !canBeActive}
+          >
+            <s-option value="draft">Draft</s-option>
+            <s-option value="active" disabled={!canBeActive}>
+              Active
+            </s-option>
+            <s-option value="inactive">Inactive</s-option>
+          </s-select>
+        </s-box>
+        </s-section>
+      </form>
     </s-page>
   );
 }
