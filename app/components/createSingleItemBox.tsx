@@ -1,12 +1,15 @@
 import { ColorPicker } from "antd";
+import { TSingleItemBoxConfig } from "app/lib/api/mystify/schema";
 import { selectMultipleProducts } from "app/lib/api/shopify/api";
 import { TVariantSelection } from "app/lib/api/shopify/schema";
 import { useState, useEffect, useMemo } from "react";
 
 export function CreateSingleItemBox({
   onValidationChange,
+  onConfigChange,
 }: {
   onValidationChange?: (isValid: boolean) => void;
+  onConfigChange?: (config: TSingleItemBoxConfig) => void;
 }) {
   const [mysteryItems, setMysteryItems] = useState<TVariantSelection>([]);
   const [chanceValues, setChanceValues] = useState<number[]>([]);
@@ -53,6 +56,17 @@ export function CreateSingleItemBox({
   useEffect(() => {
     onValidationChange?.(isValid);
   }, [isValid, onValidationChange]);
+
+  useEffect(() => {
+    onConfigChange?.({
+      items: mysteryItems.map((item, idx) => ({
+        variantId: item.variantId,
+        itemName: item.itemName,
+        chance: chanceValues[idx] || 0,
+        color: colorValues[idx] || "#000000",
+      })),
+    });
+  }, [mysteryItems, chanceValues, colorValues, onConfigChange]);
 
   // Generate random hex color
   const generateRandomColor = (): string => {
@@ -156,16 +170,6 @@ export function CreateSingleItemBox({
         <s-table-body>
           {mysteryItems.map((item, idx) => (
             <s-table-row key={idx}>
-              <input
-                type="hidden"
-                name={`item-${idx}-variantId`}
-                value={item.variantId}
-              />
-              <input
-                type="hidden"
-                name={`item-${idx}-itemName`}
-                value={item.itemName}
-              />
               <s-table-cell>
                 <s-box border="base" borderRadius="base" maxInlineSize="30px">
                   <s-stack gap="base">
@@ -187,7 +191,6 @@ export function CreateSingleItemBox({
               <s-table-cell>
                 <s-box maxInlineSize="70px">
                   <s-number-field
-                    name={`item-${idx}-chance`}
                     value={chanceValues[idx]?.toString() || "0"}
                     onChange={(e) =>
                       handleChanceChange(
@@ -216,11 +219,6 @@ export function CreateSingleItemBox({
                       handleColorChange(idx, hex || colorValues[idx] || "#000000")
                     }
                     disabledAlpha
-                  />
-                  <input
-                    type="hidden"
-                    name={`item-${idx}-color`}
-                    value={colorValues[idx] || "#000000"}
                   />
                 </s-box>
               </s-table-cell>
