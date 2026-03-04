@@ -7,7 +7,7 @@ import {
   TSingleItemBoxConfig,
 } from "app/lib/api/mystify/schema";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { SaveBar, useAppBridge } from "@shopify/app-bridge-react";
 import { SelectProduct } from "app/components/selectProduct";
 import { SelectBoxType } from "app/components/selectBoxType";
 import { CreateBundleBox } from "app/components/createBundleBox";
@@ -17,15 +17,22 @@ import { TProduct, TVariantSelection } from "app/lib/api/shopify/schema";
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
+  useNavigate,
   useFetcher,
   useLoaderData,
 } from "react-router";
 import { authenticate } from "app/shopify.server";
+import db from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
+  // @ts-ignore: Ignore type error if Prisma type is not recognized
+  const existingBoxes = await (db as any).mysteryBox.findMany({
+    where: { shop: session.shop },
+    select: { productId: true },
+  });
 
-  return { shop: session.shop };
+  return { usedProductIds: existingBoxes.map((box: { productId: any; }) => box.productId) };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -83,10 +90,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Index() {
-  const { shop } = useLoaderData<typeof loader>();
-  const [selectedType, setSelectedType] = useState<TBoxType>();
-  const [boxStatus, setBoxStatus] = useState<TCreateBoxStatus>("draft");
-  const [selectedProduct, setSelectedProduct] = useState<TProduct>({
+  const { usedProductIds } = useLoaderData<typeof loader>();
+  const defaultProduct: TProduct = {
     title: "Mystery Box Product Title",
     description:
       "This is a brief description of the product inside the mystery box. It gives an overview of what to expect.",
@@ -94,9 +99,19 @@ export default function Index() {
     image:
       "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png",
     inventory: 0,
-  });
+  };
+  const [selectedType, setSelectedType] = useState<TBoxType>();
+  const [boxStatus, setBoxStatus] = useState<TCreateBoxStatus>("draft");
+  const [selectedProduct, setSelectedProduct] = useState<TProduct>(defaultProduct);
   const [productId, setProductId] = useState<string>("");
   const [boxConfigValid, setBoxConfigValid] = useState<boolean>(false);
+  const [smartStockManagement, setSmartStockManagement] =
+    useState<boolean>(false);
+  const [preventDuplicateBundleSelections, setPreventDuplicateBundleSelections] =
+    useState<boolean>(false);
+  const [showSmartStockHint, setShowSmartStockHint] = useState<boolean>(false);
+  const [showPreventDuplicateHint, setShowPreventDuplicateHint] =
+    useState<boolean>(false);
   const [singleItemConfig, setSingleItemConfig] =
     useState<TSingleItemBoxConfig | null>(null);
   const [bundleConfig, setBundleConfig] = useState<TBundleBoxConfig | null>(null);
@@ -106,7 +121,11 @@ export default function Index() {
   const boxStatusInputRef = useRef<HTMLInputElement>(null);
 
   const appBridge = useAppBridge();
-  const [hashedPayload, setHashedPayload] = useState<string>("");
+  const usedProductIdSet = useMemo(() => new Set(usedProductIds), [usedProductIds]);
+  const isDuplicateProduct = useMemo(
+    () => productId !== "" && usedProductIdSet.has(productId),
+    [productId, usedProductIdSet],
+  );
 
   // Trigger form change event when state changes
   useEffect(() => {
@@ -133,8 +152,14 @@ export default function Index() {
     const hasProduct =
       productId !== "" &&
       selectedProduct.title !== "Mystery Box Product Title";
-    return hasBoxType && hasProduct && boxConfigValid;
-  }, [selectedType, productId, selectedProduct.title, boxConfigValid]);
+    return hasBoxType && hasProduct && boxConfigValid && !isDuplicateProduct;
+  }, [
+    selectedType,
+    productId,
+    selectedProduct.title,
+    boxConfigValid,
+    isDuplicateProduct,
+  ]);
 
   // Auto-revert to draft if form becomes invalid while active
   useEffect(() => {
@@ -156,6 +181,8 @@ export default function Index() {
   };
 
   const fetcher = useFetcher<typeof action>();
+  const saveFetcher = useFetcher<{ ok?: boolean; error?: string }>();
+  const navigate = useNavigate();
 
   const routeToProductCreation = async (): Promise<string> => {
     if (!appBridge.intents.invoke) return Promise.resolve("");
@@ -173,127 +200,139 @@ export default function Index() {
   useEffect(() => {
     setSingleItemConfig(null);
     setBundleConfig(null);
+    setPreventDuplicateBundleSelections(false);
+    setShowPreventDuplicateHint(false);
   }, [selectedType]);
 
-  const postPayloadJson = useMemo(() => {
-    if (!selectedType || !productId) return "";
+  const parsedPayload = useMemo<TCreateBoxPostPayload | null>(() => {
+    if (!selectedType || !productId) return null;
 
     let payload: TCreateBoxPostPayload | null = null;
     if (selectedType === "item" && singleItemConfig) {
       payload = {
-        action: "create",
         boxType: "item",
         productId,
+        productTitle: selectedProduct.title,
         boxStatus,
+        smartStockManagement,
         config: singleItemConfig,
       };
     }
 
     if (selectedType === "bundle" && bundleConfig) {
       payload = {
-        action: "create",
         boxType: "bundle",
         productId,
+        productTitle: selectedProduct.title,
         boxStatus,
+        smartStockManagement,
+        preventDuplicateBundleSelections,
         config: bundleConfig,
       };
     }
 
-    if (!payload) return "";
+    if (!payload) return null;
     const parsed = safeParseCreateBoxPostPayload(payload);
-    return parsed.success ? JSON.stringify(parsed.data) : "";
-  }, [selectedType, productId, boxStatus, singleItemConfig, bundleConfig]);
+    return parsed.success ? parsed.data : null;
+  }, [
+    selectedType,
+    productId,
+    boxStatus,
+    smartStockManagement,
+    preventDuplicateBundleSelections,
+    singleItemConfig,
+    bundleConfig,
+  ]);
 
-  const fullPostPayloadJson = useMemo(() => {
-    if (!selectedType || !productId || !postPayloadJson) return "";
+  const itemConfigJson = useMemo(() => {
+    if (!parsedPayload || parsedPayload.boxType !== "item") return "";
+    return JSON.stringify(parsedPayload.config);
+  }, [parsedPayload]);
 
-    return JSON.stringify({
-      shop,
-      boxType: selectedType,
-      productId,
-      boxStatus,
-      boxPayload: postPayloadJson,
-    });
-  }, [shop, selectedType, productId, boxStatus, postPayloadJson]);
+  const bundleConfigJson = useMemo(() => {
+    if (!parsedPayload || parsedPayload.boxType !== "bundle") return "";
+    return JSON.stringify(parsedPayload.config);
+  }, [parsedPayload]);
+  const hasSelectedProduct =
+    productId !== "" && selectedProduct.title !== "Mystery Box Product Title";
 
-  const toHex = (buffer: ArrayBuffer): string =>
-    Array.from(new Uint8Array(buffer))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
-
-  const hmacSha256 = async (payload: string, accessToken: string): Promise<string> => {
-    if (!globalThis.crypto?.subtle) return "";
-
-    const encoder = new TextEncoder();
-    const key = await globalThis.crypto.subtle.importKey(
-      "raw",
-      encoder.encode(accessToken),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"],
+  const hasFormChanges = useMemo(() => {
+    return (
+      selectedType !== undefined ||
+      productId !== "" ||
+      boxStatus !== "draft" ||
+      smartStockManagement ||
+      preventDuplicateBundleSelections ||
+      singleItemConfig !== null ||
+      bundleConfig !== null
     );
-    const signature = await globalThis.crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(payload),
-    );
+  }, [
+    selectedType,
+    productId,
+    boxStatus,
+    smartStockManagement,
+    preventDuplicateBundleSelections,
+    singleItemConfig,
+    bundleConfig,
+  ]);
 
-    return toHex(signature);
-  };
-
-  const getSessionAccessToken = async (): Promise<string> => {
-    const app = appBridge as unknown as {
-      idToken?: () => Promise<string>;
-      sessionToken?: { get?: () => Promise<string> };
-    };
-
-    if (typeof app.idToken === "function") {
-      return app.idToken();
-    }
-
-    if (typeof app.sessionToken?.get === "function") {
-      return app.sessionToken.get();
-    }
-
-    return "";
+  const resetFormState = () => {
+    setSelectedType(undefined);
+    setBoxStatus("draft");
+    setSelectedProduct(defaultProduct);
+    setProductId("");
+    setBoxConfigValid(false);
+    setSmartStockManagement(false);
+    setPreventDuplicateBundleSelections(false);
+    setShowSmartStockHint(false);
+    setShowPreventDuplicateHint(false);
+    setSingleItemConfig(null);
+    setBundleConfig(null);
   };
 
   useEffect(() => {
-    let active = true;
+    if (saveFetcher.data?.ok) {
+      void appBridge.saveBar.hide?.("create-box-save-bar");
+      resetFormState();
+      void navigate("/app");
+    }
+  }, [appBridge.saveBar, saveFetcher.data, navigate]);
 
-    const hashPayload = async () => {
-      if (!fullPostPayloadJson) {
-        if (active) setHashedPayload("");
-        return;
-      }
-
-      const accessToken = await getSessionAccessToken();
-      if (!accessToken) {
-        if (active) setHashedPayload("");
-        return;
-      }
-
-      const signature = await hmacSha256(fullPostPayloadJson, accessToken);
-
-      if (active) {
-        setHashedPayload(signature);
-      }
-    };
-
-    void hashPayload();
-
+  useEffect(() => {
     return () => {
-      active = false;
+      void appBridge.saveBar.hide?.("create-box-save-bar");
     };
-  }, [appBridge, fullPostPayloadJson]);
+  }, [appBridge.saveBar]);
 
   return (
     <s-page heading="Create a New Mystery Box">
+      <SaveBar id="create-box-save-bar" open={hasFormChanges}>
+        <button
+          variant="primary"
+          type="button"
+          disabled={
+            !parsedPayload || saveFetcher.state !== "idle" || isDuplicateProduct
+          }
+          onClick={() => {
+            if (!formRef.current) return;
+            saveFetcher.submit(formRef.current, {
+              method: "post",
+              action: "/app/createBox/save",
+            });
+          }}
+        >
+          Save
+        </button>
+        <button type="reset" form="create-box-form">
+          Discard
+        </button>
+      </SaveBar>
       <form
+        id="create-box-form"
         ref={formRef}
         method="post"
-        action="https://testing-mock.free.beeceptor.com"
-        data-save-bar
+        action="/app/createBox/save"
+        onReset={resetFormState}
       >
         {/* Hidden inputs for form data */}
         <input
@@ -302,21 +341,31 @@ export default function Index() {
           name="boxType"
           value={selectedType || ""}
         />
-        <input type="hidden" name="shop" value={shop} />
         <input
           ref={productIdInputRef}
           type="hidden"
           name="productId"
           value={productId}
         />
+        <input type="hidden" name="productTitle" value={selectedProduct.title} />
         <input
           ref={boxStatusInputRef}
           type="hidden"
           name="boxStatus"
           value={boxStatus}
         />
-        <input type="hidden" name="boxPayload" value={postPayloadJson} />
-        <input type="hidden" name="payloadHash" value={hashedPayload} />
+        <input
+          type="hidden"
+          name="smartStockManagement"
+          value={smartStockManagement ? "true" : "false"}
+        />
+        <input
+          type="hidden"
+          name="preventDuplicateBundleSelections"
+          value={preventDuplicateBundleSelections ? "true" : "false"}
+        />
+        <input type="hidden" name="itemConfig" value={itemConfigJson} />
+        <input type="hidden" name="bundleConfig" value={bundleConfigJson} />
         <s-box padding="base"></s-box>
         <s-box padding="small-200"></s-box>
         <s-stack
@@ -351,10 +400,23 @@ export default function Index() {
               productFetcher={fetcher}
               setProductId={setProductId}
             />
+            {isDuplicateProduct ? (
+              <s-box paddingBlockStart="small-200">
+                <s-banner tone="warning">
+                  This product is already used by another mystery box. Select a
+                  different product.
+                </s-banner>
+              </s-box>
+            ) : null}
+            {saveFetcher.data?.error ? (
+              <s-box paddingBlockStart="small-200">
+                <s-banner tone="critical">{saveFetcher.data.error}</s-banner>
+              </s-box>
+            ) : null}
           </>
         )}
         <s-box padding="small-300"></s-box>
-        {selectedProduct.title !== "Mystery Box Product Title" ? (
+        {hasSelectedProduct ? (
           <>
             <s-heading>Configure Box</s-heading>
             <s-box padding="small-200"></s-box>
@@ -370,6 +432,117 @@ export default function Index() {
                   onConfigChange={setSingleItemConfig}
                 />
               )}
+            </s-section>
+          </>
+        ) : null}
+        {hasSelectedProduct ? (
+          <>
+            <s-box padding="small-300"></s-box>
+            <s-heading>Advanced Settings</s-heading>
+            <s-box padding="small-200"></s-box>
+            <s-section>
+              <s-stack gap="small">
+                <div>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <label
+                      style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={smartStockManagement}
+                        onChange={(e) =>
+                          setSmartStockManagement(e.currentTarget.checked)
+                        }
+                      />
+                      Smart stock management
+                    </label>
+                    <s-button
+                      variant="tertiary"
+                      onClick={() => setShowSmartStockHint((value) => !value)}
+                      accessibilityLabel="Smart stock management help"
+                    >
+                      {showSmartStockHint ? <s-icon type="chevron-up" /> : <s-icon type="chevron-down" />}
+                    </s-button>
+                  </div>
+                  {showSmartStockHint ? (
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        padding: "6px 10px",
+                        border: "1px solid #d9d9d9",
+                        borderRadius: "6px",
+                        background: "#f6f6f7",
+                        fontSize: "12px",
+                        lineHeight: "1.4",
+                      }}
+                    >
+                      When enabled, stock handling can use smarter logic for
+                      mystery-box allocation and availability.
+                    </div>
+                  ) : null}
+                </div>
+                {selectedType === "bundle" ? (
+                  <div>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <label
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={preventDuplicateBundleSelections}
+                          onChange={(e) =>
+                            setPreventDuplicateBundleSelections(
+                              e.currentTarget.checked,
+                            )
+                          }
+                        />
+                        Prevent duplicate product selections across sets
+                      </label>
+                      <s-button
+                        variant="tertiary"
+                        onClick={() =>
+                          setShowPreventDuplicateHint((value) => !value)
+                        }
+                        accessibilityLabel="Prevent duplicate selections help"
+                      >
+                        {showPreventDuplicateHint ? <s-icon type="chevron-up" /> : <s-icon type="chevron-down" />}
+                      </s-button>
+                    </div>
+                    {showPreventDuplicateHint ? (
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          padding: "6px 10px",
+                          border: "1px solid #d9d9d9",
+                          borderRadius: "6px",
+                          background: "#f6f6f7",
+                          fontSize: "12px",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        When enabled, the same product can only appear in one
+                        bundle set, even if selected multiple times.
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </s-stack>
             </s-section>
           </>
         ) : null}

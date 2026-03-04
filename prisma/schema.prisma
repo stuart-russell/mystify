@@ -30,3 +30,21 @@ model Session {
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
+
+model MysteryBox {
+  id                               String   @id @default(cuid())
+  shop                             String
+  productId                        String
+  productTitle                     String
+  boxType                          String
+  boxStatus                        String   @default("draft")
+  smartStockManagement             Boolean  @default(false)
+  preventDuplicateBundleSelections Boolean  @default(false)
+  itemConfig                       String?
+  bundleConfig                     String?
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
+
+  @@unique([shop, productId])
+  @@index([shop])
+}

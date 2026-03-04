@@ -14,7 +14,19 @@ export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
       <s-table-body>
         {tableData.map((row, idx) => (
           <s-table-row key={idx}>
-            <s-table-cell></s-table-cell>
+            <s-table-cell>
+              <img
+                src={row.imageUrl}
+                alt={row.boxName}
+                width={32}
+                height={32}
+                style={{
+                  borderRadius: "6px",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            </s-table-cell>
             <s-table-cell>{row.boxName}</s-table-cell>
             <s-table-cell>
               {row.type === "bundle" ? "Bundle" : "Single Item"}
@@ -24,7 +36,7 @@ export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
                 {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
               </s-badge>
             </s-table-cell>
-            <s-table-cell>—</s-table-cell>
+            <s-table-cell>{row.amount}</s-table-cell>
             <s-table-cell>
               <s-stack gap="small-500" direction="inline">
                 <s-button

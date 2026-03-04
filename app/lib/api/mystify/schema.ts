@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 const zBoxType = z.enum(["bundle", "item"]);
-const zFormAction = z.literal("create");
 const zCreateBoxStatus = z.enum(["draft", "active", "inactive"]);
 const zHexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color");
 
@@ -70,18 +69,21 @@ const zBundleBoxConfig = z.object({
 });
 
 const zCreateItemBoxPostPayload = z.object({
-  action: zFormAction,
   boxType: z.literal("item"),
   productId: z.string().min(1),
+  productTitle: z.string().min(1),
   boxStatus: zCreateBoxStatus,
+  smartStockManagement: z.boolean(),
   config: zSingleItemBoxConfig,
 });
 
 const zCreateBundleBoxPostPayload = z.object({
-  action: zFormAction,
   boxType: z.literal("bundle"),
   productId: z.string().min(1),
+  productTitle: z.string().min(1),
   boxStatus: zCreateBoxStatus,
+  smartStockManagement: z.boolean(),
+  preventDuplicateBundleSelections: z.boolean(),
   config: zBundleBoxConfig,
 });
 
@@ -91,6 +93,7 @@ export const zCreateBoxPostPayload = z.discriminatedUnion("boxType", [
 ]);
 
 const zBoxTable = z.object({
+  imageUrl: z.string().url().optional(),
   boxName: z.string().min(1),
   type: zBoxType,
   status: z.enum(["active", "expired", "inactive", "draft"]),
