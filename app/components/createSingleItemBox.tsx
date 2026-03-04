@@ -4,16 +4,43 @@ import { selectMultipleProducts } from "app/lib/api/shopify/api";
 import { TVariantSelection } from "app/lib/api/shopify/schema";
 import { useState, useEffect, useMemo } from "react";
 
+type TInitialSingleItem = TVariantSelection[number] & {
+  chance: number;
+  color: string;
+};
+
+const toVariantSelection = (item: TInitialSingleItem): TVariantSelection[number] => ({
+  variantId: item.variantId,
+  itemName: item.itemName,
+  image: item.image,
+  inventory: item.inventory,
+});
+
 export function CreateSingleItemBox({
   onValidationChange,
   onConfigChange,
+  initialItems,
 }: {
   onValidationChange?: (isValid: boolean) => void;
   onConfigChange?: (config: TSingleItemBoxConfig) => void;
+  initialItems?: TInitialSingleItem[];
 }) {
-  const [mysteryItems, setMysteryItems] = useState<TVariantSelection>([]);
-  const [chanceValues, setChanceValues] = useState<number[]>([]);
-  const [colorValues, setColorValues] = useState<string[]>([]);
+  const [mysteryItems, setMysteryItems] = useState<TVariantSelection>(
+    initialItems?.map(toVariantSelection) ?? [],
+  );
+  const [chanceValues, setChanceValues] = useState<number[]>(
+    initialItems?.map((item) => item.chance) ?? [],
+  );
+  const [colorValues, setColorValues] = useState<string[]>(
+    initialItems?.map((item) => item.color) ?? [],
+  );
+
+  useEffect(() => {
+    if (!initialItems) return;
+    setMysteryItems(initialItems.map(toVariantSelection));
+    setChanceValues(initialItems.map((item) => item.chance));
+    setColorValues(initialItems.map((item) => item.color));
+  }, [initialItems]);
 
   // Calculate total chance
   const totalChance = useMemo(() => {
@@ -227,7 +254,7 @@ export function CreateSingleItemBox({
                   type="button"
                   variant="tertiary"
                   icon="x"
-                  onClick={(_) => {
+                  onClick={() => {
                     const updatedItems = mysteryItems.filter(
                       (_, index) => index !== idx,
                     );
@@ -271,7 +298,7 @@ export function CreateSingleItemBox({
       <s-box padding="base none">
         <s-button
           type="button"
-          onClick={(_) => {
+          onClick={() => {
             selectMultipleProducts(setMysteryItems);
           }}
           accessibilityLabel="Select the product to use as a mystery box"

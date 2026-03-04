@@ -2,34 +2,8 @@ import { ExistingBoxTable } from "app/components/existingBoxTable";
 import { TBoxTable } from "app/lib/api/mystify/schema";
 import { authenticate } from "app/shopify.server";
 import db from "../db.server";
-import type { LoaderFunctionArgs } from "react-router";
+import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
-
-const safeParseItemConfig = (value: string | null): number => {
-  if (!value) return 1;
-  try {
-    const parsed = JSON.parse(value) as { items?: unknown[] };
-    return Array.isArray(parsed.items) ? Math.max(parsed.items.length, 1) : 1;
-  } catch {
-    return 1;
-  }
-};
-
-const safeParseBundleConfig = (value: string | null): number => {
-  if (!value) return 1;
-  try {
-    const parsed = JSON.parse(value) as {
-      sets?: Array<{ items?: unknown[] }>;
-    };
-    if (!Array.isArray(parsed.sets)) return 1;
-    const itemCount = parsed.sets.reduce((sum, set) => {
-      return sum + (Array.isArray(set.items) ? set.items.length : 0);
-    }, 0);
-    return Math.max(itemCount, 1);
-  } catch {
-    return 1;
-  }
-};
 
 const toBoxType = (value: string): TBoxTable["type"] =>
   value === "bundle" ? "bundle" : "item";
@@ -51,6 +25,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     "https://cdn.shopify.com/static/themes/horizon/placeholders/product-cube.png.png";
   const productIds = mysteryBoxes.map((box) => box.productId);
   const productImageMap = new Map<string, string>();
+  const productInventoryMap = new Map<string, number>();
 
   if (productIds.length > 0) {
     const response = await admin.graphql(
@@ -59,6 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         nodes(ids: $ids) {
           ... on Product {
             id
+            totalInventory
             featuredImage {
               url
             }
@@ -69,28 +45,50 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     );
     const responseJson = await response.json();
     const nodes = responseJson.data?.nodes as
-      | Array<{ id?: string; featuredImage?: { url?: string } }>
+      | Array<{
+          id?: string;
+          totalInventory?: number;
+          featuredImage?: { url?: string };
+        }>
       | undefined;
 
     nodes?.forEach((node) => {
-      if (node?.id && node.featuredImage?.url) {
-        productImageMap.set(node.id, node.featuredImage.url);
-      }
+      if (!node?.id) return;
+      if (node.featuredImage?.url) productImageMap.set(node.id, node.featuredImage.url);
+      productInventoryMap.set(node.id, node.totalInventory ?? 0);
     });
   }
 
   const tableData: TBoxTable[] = mysteryBoxes.map((box) => ({
+    id: box.id,
     imageUrl: productImageMap.get(box.productId) ?? fallbackImageUrl,
     boxName: box.productTitle || `Box ${box.productId.slice(-8)}`,
     type: toBoxType(box.boxType),
     status: toBoxStatus(box.boxStatus),
-    amount:
-      box.boxType === "bundle"
-        ? safeParseBundleConfig(box.bundleConfig)
-        : safeParseItemConfig(box.itemConfig),
+    amount: productInventoryMap.get(box.productId) ?? 0,
   }));
 
   return { tableData };
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { session } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const boxId = formData.get("boxId");
+
+  if (intent !== "delete" || typeof boxId !== "string" || boxId.length === 0) {
+    return redirect("/app/");
+  }
+
+  await db.mysteryBox.deleteMany({
+    where: {
+      id: boxId,
+      shop: session.shop,
+    },
+  });
+
+  return redirect("/app/");
 };
 
 export default function Index() {

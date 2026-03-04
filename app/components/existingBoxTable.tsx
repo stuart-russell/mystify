@@ -1,6 +1,13 @@
 import { TBoxTable } from "app/lib/api/mystify/schema";
+import { useFetcher, useLocation } from "react-router";
 
 export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
+  const fetcher = useFetcher();
+  const location = useLocation();
+  const deleteAction = location.search
+    ? `${location.pathname}${location.search}&index`
+    : `${location.pathname}?index`;
+
   return (
     <s-table>
       <s-table-header-row>
@@ -13,7 +20,7 @@ export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
       </s-table-header-row>
       <s-table-body>
         {tableData.map((row, idx) => (
-          <s-table-row key={idx}>
+          <s-table-row key={row.id || idx}>
             <s-table-cell>
               <img
                 src={row.imageUrl}
@@ -43,12 +50,30 @@ export function ExistingBoxTable({ tableData }: { tableData: TBoxTable[] }) {
                   variant="tertiary"
                   icon="edit"
                   accessibilityLabel="edit"
+                  href={`/app/boxes/${row.id}/edit`}
                 />
-                <s-button
-                  variant="tertiary"
-                  icon="delete"
-                  accessibilityLabel="delete"
-                />
+                <fetcher.Form
+                  method="post"
+                  action={deleteAction}
+                  onSubmit={(event) => {
+                    if (
+                      !window.confirm(
+                        `Delete "${row.boxName}"? This action cannot be undone.`,
+                      )
+                    ) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="intent" value="delete" />
+                  <input type="hidden" name="boxId" value={row.id} />
+                  <s-button
+                    type="submit"
+                    variant="tertiary"
+                    icon="delete"
+                    accessibilityLabel="delete"
+                  />
+                </fetcher.Form>
               </s-stack>
             </s-table-cell>
           </s-table-row>

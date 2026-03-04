@@ -36,11 +36,26 @@ function groupHasUniqueColorsPerChance(items: TBundleSetItem[]): boolean {
 export function CreateBundleBox({
   onValidationChange,
   onConfigChange,
+  initialSets,
 }: {
   onValidationChange?: (isValid: boolean) => void;
   onConfigChange?: (config: TBundleBoxConfig) => void;
+  initialSets?: Array<{ setId: number; items: TBundleSetItem[] }>;
 }) {
-  const [bundleSets, setBundleSets] = useState<TBundleSet[]>([{ id: 1, items: [] }]);
+  const [bundleSets, setBundleSets] = useState<TBundleSet[]>(
+    initialSets && initialSets.length > 0
+      ? initialSets.map((set) => ({ id: set.setId, items: set.items }))
+      : [{ id: 1, items: [] }],
+  );
+
+  useEffect(() => {
+    if (!initialSets) return;
+    setBundleSets(
+      initialSets.length > 0
+        ? initialSets.map((set) => ({ id: set.setId, items: set.items }))
+        : [{ id: 1, items: [] }],
+    );
+  }, [initialSets]);
 
   const setValidation = useMemo(() => {
     return bundleSets.map((set) => {
@@ -343,7 +358,7 @@ export function CreateBundleBox({
               <s-stack gap="small">
                 {!hasItems && (
                   <s-text tone="critical">
-                    Set {setIdx + 1} must include at least one product.
+                    Set must include at least one product.
                   </s-text>
                 )}
                 {hasItems && (
@@ -357,7 +372,8 @@ export function CreateBundleBox({
                 )}
                 {hasItems && totalChance !== 100 && (
                   <s-text tone="critical">
-                    Please ensure this set's item chances add up to exactly 100%
+                    Please ensure this set&apos;s item chances add up to exactly
+                    100%
                   </s-text>
                 )}
                 {hasItems && !hasUniqueColorsPerChance && (

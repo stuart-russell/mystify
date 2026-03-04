@@ -93,6 +93,7 @@ export const zCreateBoxPostPayload = z.discriminatedUnion("boxType", [
 ]);
 
 const zBoxTable = z.object({
+  id: z.string().min(1),
   imageUrl: z.string().url().optional(),
   boxName: z.string().min(1),
   type: zBoxType,
