@@ -305,7 +305,19 @@ export default function Index() {
   }, [appBridge.saveBar]);
 
   return (
-    <s-page heading="Create a New Mystery Box">
+    <s-page>
+      <s-stack
+        direction="inline"
+        alignItems="center"
+        style={{ columnGap: "4px" }}
+      >
+        <s-link href="/app">
+          <s-button variant="tertiary" accessibilityLabel="Back to Manage Boxes">
+            <s-icon type="chevron-left" />
+          </s-button>
+        </s-link>
+        <s-heading>Create a New Box</s-heading>
+      </s-stack>
       <SaveBar id="create-box-save-bar" open={hasFormChanges}>
         <button
           variant="primary"

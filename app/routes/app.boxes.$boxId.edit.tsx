@@ -602,7 +602,20 @@ export default function EditBox() {
   }, [appBridge.saveBar]);
 
   return (
-    <s-page heading="Edit Mystery Box">
+    <s-page>
+      <s-stack
+        direction="inline"
+        alignItems="center"
+        paddingBlockEnd="small-200"
+        style={{ columnGap: "4px" }}
+      >
+        <s-link href="/app">
+          <s-button variant="tertiary" accessibilityLabel="Back to Manage Boxes">
+            <s-icon type="chevron-left" />
+          </s-button>
+        </s-link>
+        <s-heading>Edit Mystery Box</s-heading>
+      </s-stack>
       <SaveBar id="edit-box-save-bar" open={hasFormChanges}>
         <button
           variant="primary"
