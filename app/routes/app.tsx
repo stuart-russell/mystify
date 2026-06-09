@@ -20,6 +20,7 @@ export default function App() {
       <s-app-nav>
         <s-link href="/app/">Manage Existing Boxes</s-link>
         <s-link href="/app/createBox">Create a New Box</s-link>
+        <s-link href="/app/analytics">Analytics</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
