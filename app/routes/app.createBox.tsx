@@ -8,6 +8,7 @@ import {
 } from "app/lib/api/mystify/schema";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { SaveBar, useAppBridge } from "@shopify/app-bridge-react";
+import { ColorPicker } from "antd";
 import { SelectProduct } from "app/components/selectProduct";
 import { SelectBoxType } from "app/components/selectBoxType";
 import { CreateBundleBox } from "app/components/createBundleBox";
@@ -115,6 +116,11 @@ export default function Index() {
   const [singleItemConfig, setSingleItemConfig] =
     useState<TSingleItemBoxConfig | null>(null);
   const [bundleConfig, setBundleConfig] = useState<TBundleBoxConfig | null>(null);
+  const [animationStyle, setAnimationStyle] = useState<string>("default");
+  const [boxImageUrl, setBoxImageUrl] = useState<string>("");
+  const [openSoundUrl, setOpenSoundUrl] = useState<string>("");
+  const [backgroundColor, setBackgroundColor] = useState<string>("");
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
   const boxTypeInputRef = useRef<HTMLInputElement>(null);
   const productIdInputRef = useRef<HTMLInputElement>(null);
@@ -264,7 +270,12 @@ export default function Index() {
       smartStockManagement ||
       preventDuplicateBundleSelections ||
       singleItemConfig !== null ||
-      bundleConfig !== null
+      bundleConfig !== null ||
+      animationStyle !== "default" ||
+      boxImageUrl !== "" ||
+      openSoundUrl !== "" ||
+      backgroundColor !== "" ||
+      backgroundImageUrl !== ""
     );
   }, [
     selectedType,
@@ -274,6 +285,11 @@ export default function Index() {
     preventDuplicateBundleSelections,
     singleItemConfig,
     bundleConfig,
+    animationStyle,
+    boxImageUrl,
+    openSoundUrl,
+    backgroundColor,
+    backgroundImageUrl,
   ]);
 
   const resetFormState = () => {
@@ -288,6 +304,11 @@ export default function Index() {
     setShowPreventDuplicateHint(false);
     setSingleItemConfig(null);
     setBundleConfig(null);
+    setAnimationStyle("default");
+    setBoxImageUrl("");
+    setOpenSoundUrl("");
+    setBackgroundColor("");
+    setBackgroundImageUrl("");
   };
 
   useEffect(() => {
@@ -378,6 +399,11 @@ export default function Index() {
         />
         <input type="hidden" name="itemConfig" value={itemConfigJson} />
         <input type="hidden" name="bundleConfig" value={bundleConfigJson} />
+        <input type="hidden" name="animationStyle" value={animationStyle} />
+        <input type="hidden" name="boxImageUrl" value={boxImageUrl} />
+        <input type="hidden" name="openSoundUrl" value={openSoundUrl} />
+        <input type="hidden" name="backgroundColor" value={backgroundColor} />
+        <input type="hidden" name="backgroundImageUrl" value={backgroundImageUrl} />
         <s-box padding="base"></s-box>
         <s-box padding="small-200"></s-box>
         <s-stack
@@ -554,6 +580,54 @@ export default function Index() {
                     ) : null}
                   </div>
                 ) : null}
+              </s-stack>
+            </s-section>
+          </>
+        ) : null}
+        <s-box padding="small-300"></s-box>
+        {hasSelectedProduct ? (
+          <>
+            <s-heading>Design</s-heading>
+            <s-box padding="small-200"></s-box>
+            <s-section>
+              <s-stack gap="base">
+                <s-select
+                  label="Animation style"
+                  value={animationStyle}
+                  onChange={(e) => setAnimationStyle(e.currentTarget.value)}
+                >
+                  <s-option value="default">Default — box shake and flip</s-option>
+                  <s-option value="slide">Slide — card flip reveal</s-option>
+                  <s-option value="fade">Fade — subtle fade transition</s-option>
+                </s-select>
+                <s-text-field
+                  label="Box image URL"
+                  value={boxImageUrl}
+                  onChange={(e) => setBoxImageUrl(e.currentTarget.value)}
+                  placeholder="https://example.com/box.png"
+                />
+                <s-text-field
+                  label="Open sound URL"
+                  value={openSoundUrl}
+                  onChange={(e) => setOpenSoundUrl(e.currentTarget.value)}
+                  placeholder="https://example.com/open.mp3"
+                />
+                <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>Background color</span>
+                  <s-box maxInlineSize="32px">
+                    <ColorPicker
+                      value={backgroundColor || "#ffffff"}
+                      onChange={(_color, hex) => setBackgroundColor(hex)}
+                      disabledAlpha
+                    />
+                  </s-box>
+                </label>
+                <s-text-field
+                  label="Background image URL"
+                  value={backgroundImageUrl}
+                  onChange={(e) => setBackgroundImageUrl(e.currentTarget.value)}
+                  placeholder="https://example.com/bg.png"
+                />
               </s-stack>
             </s-section>
           </>
