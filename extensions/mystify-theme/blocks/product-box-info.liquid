@@ -1,0 +1,22 @@
+{% if product.metafields.mystify.box_config %}
+  {% assign box_config = product.metafields.mystify.box_config | parse_json %}
+  <div class="mystify-box" style="border: 2px solid #e5e5e5; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
+    <h2 style="margin: 0 0 16px 0; font-size: 24px;">Mystery Box</h2>
+    <p style="color: #666; margin: 0 0 20px 0;">{{ box_config.description | default: "Each box contains a randomly selected item. See the odds below for what you might receive!" }}</p>
+
+    {% if box_config.type == "bundle" %}
+      <p style="font-weight: 600; margin: 0 0 12px 0;">{{ box_config.set_count }} set{% if box_config.set_count > 1 %}s{% endif %} &middot; {{ box_config.total_items }} possible items</p>
+    {% else %}
+      <p style="font-weight: 600; margin: 0 0 12px 0;">{{ box_config.total_items }} possible items</p>
+    {% endif %}
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px;">
+      {% for group in box_config.chance_groups %}
+        <div style="padding: 8px 16px; border-radius: 8px; background: {{ group.color }}22; border: 2px solid {{ group.color }};">
+          <span style="font-weight: 600;">{{ group.chance }}%</span>
+          <span style="color: #666; margin-left: 4px;">chance</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
