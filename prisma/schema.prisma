@@ -32,19 +32,65 @@ model Session {
 }
 
 model MysteryBox {
-  id                               String   @id @default(cuid())
+  id                               String     @id @default(cuid())
   shop                             String
   productId                        String
   productTitle                     String
   boxType                          String
-  boxStatus                        String   @default("draft")
-  smartStockManagement             Boolean  @default(false)
-  preventDuplicateBundleSelections Boolean  @default(false)
+  boxStatus                        String     @default("draft")
+  smartStockManagement             Boolean    @default(false)
+  preventDuplicateBundleSelections Boolean    @default(false)
   itemConfig                       String?
   bundleConfig                     String?
-  createdAt                        DateTime @default(now())
-  updatedAt                        DateTime @updatedAt
+  createdAt                        DateTime   @default(now())
+  updatedAt                        DateTime   @updatedAt
+
+  boxDesign   BoxDesign?
+  boxPurchases BoxPurchase[]
 
   @@unique([shop, productId])
   @@index([shop])
+}
+
+model BoxPurchase {
+  id               String   @id @default(cuid())
+  shop             String
+  orderId          String
+  orderLineItemId  String
+  mysteryBoxId     String
+  price            String?
+  quantity         Int      @default(1)
+  status           String   @default("unopened")
+  createdAt        DateTime @default(now())
+  openedAt         DateTime?
+
+  mysteryBox MysteryBox   @relation(fields: [mysteryBoxId], references: [id])
+  reveals    BoxReveal[]
+
+  @@index([shop, orderId])
+}
+
+model BoxReveal {
+  id             String   @id @default(cuid())
+  boxPurchaseId  String
+  setId          Int?
+  variantId      String
+  itemName       String
+  createdAt      DateTime @default(now())
+
+  boxPurchase BoxPurchase @relation(fields: [boxPurchaseId], references: [id])
+
+  @@index([boxPurchaseId])
+}
+
+model BoxDesign {
+  id                 String  @id @default(cuid())
+  mysteryBoxId       String  @unique
+  animationStyle     String  @default("default")
+  boxImageUrl        String?
+  openSoundUrl       String?
+  backgroundColor    String?
+  backgroundImageUrl String?
+
+  mysteryBox MysteryBox @relation(fields: [mysteryBoxId], references: [id])
 }
