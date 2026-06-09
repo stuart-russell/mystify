@@ -1,6 +1,7 @@
 import { safeParseCreateBoxPostPayload } from "app/lib/api/mystify/schema";
 import { Prisma } from "@prisma/client";
 import { authenticate } from "app/shopify.server";
+import { boxDesign } from "../lib/engine/box-design";
 import db from "../db.server";
 import type { ActionFunctionArgs } from "react-router";
 
@@ -79,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     // @ts-ignore: Ignore type error if Prisma type is not recognized
-    await db.mysteryBox.create({
+    const box = await db.mysteryBox.create({
       data: {
         shop: session.shop,
         productId: data.productId,
@@ -96,6 +97,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         bundleConfig:
           data.boxType === "bundle" ? JSON.stringify(data.config) : null,
       },
+    });
+
+    await boxDesign.createDefault(db, box.id);
+    await boxDesign.update(db, box.id, {
+      animationStyle: formData.get("animationStyle")?.toString() || "default",
+      boxImageUrl: formData.get("boxImageUrl")?.toString() || null,
+      openSoundUrl: formData.get("openSoundUrl")?.toString() || null,
+      backgroundColor: formData.get("backgroundColor")?.toString() || null,
+      backgroundImageUrl: formData.get("backgroundImageUrl")?.toString() || null,
     });
   } catch (error) {
     if (

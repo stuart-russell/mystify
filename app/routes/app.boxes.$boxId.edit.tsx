@@ -12,6 +12,8 @@ import { CreateSingleItemBox } from "app/components/createSingleItemBox";
 import { ProductCard } from "app/components/productDisplayCard";
 import { authenticate } from "app/shopify.server";
 import { Prisma } from "@prisma/client";
+import { ColorPicker } from "antd";
+import { boxDesign } from "../lib/engine/box-design";
 import db from "../db.server";
 import { SaveBar, useAppBridge } from "@shopify/app-bridge-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -254,6 +256,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         })) || []
       : [];
 
+  const design =
+    (await boxDesign.getByBoxId(db, boxId)) ??
+    (await boxDesign.createDefault(db, boxId));
+
   return {
     boxId: mysteryBox.id,
     boxType,
@@ -267,6 +273,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     initialBundleConfig,
     initialSingleItemItems,
     initialBundleSets,
+    boxDesign: {
+      animationStyle: design.animationStyle,
+      boxImageUrl: design.boxImageUrl,
+      openSoundUrl: design.openSoundUrl,
+      backgroundColor: design.backgroundColor,
+      backgroundImageUrl: design.backgroundImageUrl,
+    },
   };
 };
 
@@ -401,6 +414,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    await boxDesign.update(db, boxId, {
+      animationStyle: formData.get("animationStyle")?.toString() || "default",
+      boxImageUrl: formData.get("boxImageUrl")?.toString() || null,
+      openSoundUrl: formData.get("openSoundUrl")?.toString() || null,
+      backgroundColor: formData.get("backgroundColor")?.toString() || null,
+      backgroundImageUrl: formData.get("backgroundImageUrl")?.toString() || null,
+    });
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -458,6 +479,11 @@ export default function EditBox() {
   const [bundleConfig, setBundleConfig] =
     useState<TBundleBoxConfig | null>(initialBundleConfig);
   const [configInstanceKey, setConfigInstanceKey] = useState<number>(0);
+  const [animationStyle, setAnimationStyle] = useState<string>(loaderData.boxDesign.animationStyle);
+  const [boxImageUrl, setBoxImageUrl] = useState<string>(loaderData.boxDesign.boxImageUrl ?? "");
+  const [openSoundUrl, setOpenSoundUrl] = useState<string>(loaderData.boxDesign.openSoundUrl ?? "");
+  const [backgroundColor, setBackgroundColor] = useState<string>(loaderData.boxDesign.backgroundColor ?? "");
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>(loaderData.boxDesign.backgroundImageUrl ?? "");
   const formRef = useRef<HTMLFormElement>(null);
 
   const saveFetcher = useFetcher<{ ok?: boolean; error?: string }>();
@@ -541,6 +567,7 @@ export default function EditBox() {
           boxType === "bundle" ? initialPreventDuplicateBundleSelections : false,
         config:
           boxType === "bundle" ? initialBundleConfig : initialSingleItemConfig,
+        design: loaderData.boxDesign,
       }),
     [
       initialBoxStatus,
@@ -549,6 +576,7 @@ export default function EditBox() {
       boxType,
       initialBundleConfig,
       initialSingleItemConfig,
+      loaderData.boxDesign,
     ],
   );
 
@@ -559,6 +587,7 @@ export default function EditBox() {
       preventDuplicateBundleSelections:
         boxType === "bundle" ? preventDuplicateBundleSelections : false,
       config: boxType === "bundle" ? bundleConfig : singleItemConfig,
+      design: { animationStyle, boxImageUrl, openSoundUrl, backgroundColor, backgroundImageUrl },
     });
 
     return currentSnapshot !== initialSnapshot;
@@ -569,6 +598,11 @@ export default function EditBox() {
     boxType,
     bundleConfig,
     singleItemConfig,
+    animationStyle,
+    boxImageUrl,
+    openSoundUrl,
+    backgroundColor,
+    backgroundImageUrl,
     initialSnapshot,
   ]);
 
@@ -585,6 +619,11 @@ export default function EditBox() {
     setShowPreventDuplicateHint(false);
     setSingleItemConfig(initialSingleItemConfig);
     setBundleConfig(initialBundleConfig);
+    setAnimationStyle(loaderData.boxDesign.animationStyle);
+    setBoxImageUrl(loaderData.boxDesign.boxImageUrl ?? "");
+    setOpenSoundUrl(loaderData.boxDesign.openSoundUrl ?? "");
+    setBackgroundColor(loaderData.boxDesign.backgroundColor ?? "");
+    setBackgroundImageUrl(loaderData.boxDesign.backgroundImageUrl ?? "");
     setConfigInstanceKey((value) => value + 1);
   };
 
@@ -658,6 +697,11 @@ export default function EditBox() {
         />
         <input type="hidden" name="itemConfig" value={itemConfigJson} />
         <input type="hidden" name="bundleConfig" value={bundleConfigJson} />
+        <input type="hidden" name="animationStyle" value={animationStyle} />
+        <input type="hidden" name="boxImageUrl" value={boxImageUrl} />
+        <input type="hidden" name="openSoundUrl" value={openSoundUrl} />
+        <input type="hidden" name="backgroundColor" value={backgroundColor} />
+        <input type="hidden" name="backgroundImageUrl" value={backgroundImageUrl} />
 
         <s-box padding="small-200"></s-box>
         <s-heading>Product</s-heading>
@@ -813,6 +857,51 @@ export default function EditBox() {
                 ) : null}
               </div>
             ) : null}
+          </s-stack>
+        </s-section>
+
+        <s-box padding="small-300"></s-box>
+        <s-heading>Design</s-heading>
+        <s-box padding="small-200"></s-box>
+        <s-section>
+          <s-stack gap="base">
+            <s-select
+              label="Animation style"
+              value={animationStyle}
+              onChange={(e) => setAnimationStyle(e.currentTarget.value)}
+            >
+              <s-option value="default">Default — box shake and flip</s-option>
+              <s-option value="slide">Slide — card flip reveal</s-option>
+              <s-option value="fade">Fade — subtle fade transition</s-option>
+            </s-select>
+            <s-text-field
+              label="Box image URL"
+              value={boxImageUrl}
+              onChange={(e) => setBoxImageUrl(e.currentTarget.value)}
+              placeholder="https://example.com/box.png"
+            />
+            <s-text-field
+              label="Open sound URL"
+              value={openSoundUrl}
+              onChange={(e) => setOpenSoundUrl(e.currentTarget.value)}
+              placeholder="https://example.com/open.mp3"
+            />
+            <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>Background color</span>
+              <s-box maxInlineSize="32px">
+                <ColorPicker
+                  value={backgroundColor || "#ffffff"}
+                  onChange={(_color, hex) => setBackgroundColor(hex)}
+                  disabledAlpha
+                />
+              </s-box>
+            </label>
+            <s-text-field
+              label="Background image URL"
+              value={backgroundImageUrl}
+              onChange={(e) => setBackgroundImageUrl(e.currentTarget.value)}
+              placeholder="https://example.com/bg.png"
+            />
           </s-stack>
         </s-section>
 
