@@ -14,6 +14,7 @@ import { authenticate } from "app/shopify.server";
 import { Prisma } from "@prisma/client";
 import { ColorPicker } from "antd";
 import { boxDesign } from "../lib/engine/box-design";
+import { syncBoxMetafield } from "../lib/engine/metafield-sync";
 import db from "../db.server";
 import { SaveBar, useAppBridge } from "@shopify/app-bridge-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -421,6 +422,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       openSoundUrl: formData.get("openSoundUrl")?.toString() || null,
       backgroundColor: formData.get("backgroundColor")?.toString() || null,
       backgroundImageUrl: formData.get("backgroundImageUrl")?.toString() || null,
+    });
+
+    await syncBoxMetafield(admin, mysteryBox.productId, {
+      boxType: mysteryBox.boxType,
+      itemConfig: mysteryBox.itemConfig,
+      bundleConfig: mysteryBox.bundleConfig,
     });
   } catch (error) {
     if (

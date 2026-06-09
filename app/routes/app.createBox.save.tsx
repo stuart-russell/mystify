@@ -2,6 +2,7 @@ import { safeParseCreateBoxPostPayload } from "app/lib/api/mystify/schema";
 import { Prisma } from "@prisma/client";
 import { authenticate } from "app/shopify.server";
 import { boxDesign } from "../lib/engine/box-design";
+import { syncBoxMetafield } from "../lib/engine/metafield-sync";
 import db from "../db.server";
 import type { ActionFunctionArgs } from "react-router";
 
@@ -106,6 +107,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       openSoundUrl: formData.get("openSoundUrl")?.toString() || null,
       backgroundColor: formData.get("backgroundColor")?.toString() || null,
       backgroundImageUrl: formData.get("backgroundImageUrl")?.toString() || null,
+    });
+
+    await syncBoxMetafield(admin, data.productId, {
+      boxType: data.boxType,
+      itemConfig: data.boxType === "item" ? JSON.stringify(data.config) : null,
+      bundleConfig: data.boxType === "bundle" ? JSON.stringify(data.config) : null,
     });
   } catch (error) {
     if (
