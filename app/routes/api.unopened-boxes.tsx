@@ -1,5 +1,6 @@
-import type { LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
+import { processOrder } from "../lib/engine/order-processor";
 import db from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -29,4 +30,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       boxName: p.mysteryBox.productTitle,
     })),
   });
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { session } = await authenticate.public.appProxy(request);
+
+  const payload = await request.json();
+
+  await processOrder(payload, session.shop, db);
+
+  return Response.json({ ok: true });
 };

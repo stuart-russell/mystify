@@ -3,14 +3,47 @@
   <div id="mystify-unbox-list" style="margin-bottom: 16px;"></div>
 </div>
 
+{% if checkout %}
+<script id="mystify-order-data" type="application/json">
+{
+  "id": {{ checkout.order_id }},
+  "line_items": [
+    {% for item in checkout.line_items %}
+    {
+      "id": {{ item.id }},
+      "product_id": {{ item.product_id }},
+      "name": {{ item.product.title | json }},
+      "price": "{{ item.final_price | money_without_currency | replace: ',', '' }}",
+      "quantity": {{ item.quantity }}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+
 <script>
 (async function() {
   const orderId = window.location.pathname.match(/\/orders\/(\d+)/)?.[1];
   if (!orderId) return;
 
+  // Register the order if order data is embedded
+  var orderDataEl = document.getElementById('mystify-order-data');
+  if (orderDataEl) {
+    try {
+      await fetch('/apps/mystify/api/unopened-boxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: orderDataEl.textContent
+      });
+    } catch(e) {}
+  }
+
+  // Fetch unopened boxes
   try {
     const resp = await fetch('/apps/mystify/api/unopened-boxes?orderId=' + orderId);
     const data = await resp.json();
+
     if (!data.unopened || data.unopened.length === 0) return;
 
     const cta = document.getElementById('mystify-unbox-cta');
@@ -27,3 +60,11 @@
   } catch(e) {}
 })();
 </script>
+
+{% schema %}
+{
+  "name": "Mystify Unbox CTA",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
